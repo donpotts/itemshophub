@@ -4,7 +4,7 @@
 ![Blazor WASM](https://img.shields.io/badge/Blazor-WASM-5C2D91?logo=blazor&logoColor=white)
 ![Semantic Kernel](https://img.shields.io/badge/Semantic%20Kernel-enabled-1C7ED6)
 
-A modern e-commerce platform built with Blazor WebAssembly, featuring AI-powered product assistance, comprehensive shopping cart functionality, and advanced product management. Fully functional with graceful AI fallbacks when credentials are unavailable.
+A modern e-commerce platform built with Blazor WebAssembly, featuring AI-powered product assistance, comprehensive shopping cart functionality, and advanced product and service management. Fully functional with graceful AI fallbacks when credentials are unavailable.
 
 > **Mission:** Demonstrate a complete e-commerce solution with AI integration, secure payments, order management, and comprehensive admin capabilities.
 
@@ -12,8 +12,8 @@ A modern e-commerce platform built with Blazor WebAssembly, featuring AI-powered
 
 ## 🧭 At a Glance
 
-- 🛍️ **Complete e-commerce stack:** Products, Shopping Cart, Orders, Payments, User Management
-- 🧱 **Rich catalog system:** Products, Brands, Categories, Features, Tags, Reviews (EF Core + SQLite)
+- 🛍️ **Complete e-commerce stack:** Products, Services, Shopping Cart, Orders, Payments, User Management
+- 🧱 **Rich catalog system:** Products, Services, Brands, Categories, Features, Tags, Reviews (EF Core + SQLite)
 - 🛡️ **Secure platform:** ASP.NET Core Identity with role-based authorization
 - 🤖 **AI shopping assistant:** GitHub Models (OpenAI-compatible) with intelligent product recommendations
 - 💳 **Payment processing:** Stripe integration for secure transactions
@@ -21,6 +21,9 @@ A modern e-commerce platform built with Blazor WebAssembly, featuring AI-powered
 - 🌓 **Modern UX:** Responsive design with dark/light theming and mobile optimization
 - 📊 **Analytics dashboard:** Order tracking, review analytics, and business insights
 - 🚚 **Order management:** Complete order lifecycle from cart to delivery
+- 🏢 **Service marketplace:** Service companies, categories, and order management
+- 📧 **Notification system:** Email notifications and in-app alerts
+- 💰 **Tax & shipping:** Configurable tax rates and shipping calculations
 
 ---
 
@@ -55,7 +58,7 @@ A modern e-commerce platform built with Blazor WebAssembly, featuring AI-powered
 ### 2. Clone & Navigate
 
 ```
-git clone https://github.com/yourusername/ItemShopHub.git
+git clone https://github.com/donpotts/ItemShopHub.git
 cd ItemShopHub
 ```
 
@@ -138,6 +141,23 @@ Visit http://localhost:5000, register an account, and explore the complete e-com
 - **Review System** — Customer reviews with star ratings and analytics
 - **Inventory Tracking** — Stock levels and availability status
 
+### Service Management
+- **Service Catalog** — Browse and manage service offerings
+- **Service Companies** — Company profiles and service providers
+- **Service Categories** — Organized service classification system
+- **Service Features** — Detailed service capabilities and offerings
+- **Service Tags** — Flexible service categorization and filtering
+- **Service Reviews** — Customer feedback and ratings for services
+- **Service Orders** — Complete service booking and fulfillment workflow
+- **Service Expenses** — Track costs and expenses for service delivery
+
+### Infrastructure & Support
+- **Address Management** — Customer shipping and billing addresses
+- **Notification System** — Email and in-app notification delivery
+- **Tax Rates** — Configurable tax calculation by region
+- **Shipping Rates** — Flexible shipping cost management
+- **Image Management** — Product and service image handling
+
 ### Payment & Orders
 - **Stripe Integration** — Secure card processing
 - **Order Workflow** — Cart → Checkout → Payment → Fulfillment
@@ -191,7 +211,16 @@ CSV operations available for administrative bulk management:
 | Product Reviews | ✅ | ProductId, CustomerEmail, Rating, ReviewText |
 | Brands | ✅ | Name, Description, Website |
 | Categories | ✅ | Name, Description, ParentCategory |
+| Features | ✅ | Name, Description |
+| Tags | ✅ | Name, Description |
+| Services | ✅ | Name, Description, Price, ServiceCompanyId |
+| Service Companies | ✅ | Name, Description, ContactInfo |
+| Service Categories | ✅ | Name, Description |
+| Service Features | ✅ | Name, Description |
+| Service Tags | ✅ | Name, Description |
+| Service Reviews | ✅ | ServiceId, CustomerEmail, Rating, ReviewText |
 | Orders | ✅ | OrderDate, Status, Total, CustomerEmail |
+| Service Orders | ✅ | OrderDate, Status, Total, ServiceId |
 
 **Implementation:**
 - `MudFileUpload` for client-side file handling
@@ -266,6 +295,25 @@ ItemShopHub.Blazor/              -> Blazor WASM client host
 - `PaymentController.cs` — Stripe payment processing
 - `OrderController.cs` — Order lifecycle management
 - `ProductController.cs` — Product catalog API
+- `ProductReviewController.cs` — Product review management
+
+### Service Management
+- `ServiceController.cs` — Service catalog API
+- `ServiceCompanyController.cs` — Service provider management
+- `ServiceCategoryController.cs` — Service categorization
+- `ServiceFeatureController.cs` — Service feature management
+- `ServiceTagController.cs` — Service tagging system
+- `ServiceReviewController.cs` — Service review management
+- `ServiceOrderController.cs` — Service order workflow
+- `ServiceExpenseController.cs` — Service expense tracking
+
+### Infrastructure Services
+- `AddressController.cs` — Address management
+- `NotificationController.cs` — Notification system
+- `EmailController.cs` — Email service integration
+- `ImageController.cs` — Image upload and management
+- `TaxRateController.cs` — Tax calculation rules
+- `ShippingRateController.cs` — Shipping cost management
 
 ### UI Components
 - `ProductCatalog.razor` — Main shopping interface
@@ -277,6 +325,12 @@ ItemShopHub.Blazor/              -> Blazor WASM client host
 ### AI Features
 - `ProductChatService.cs` — AI-powered shopping assistance
 - `ProductChat.razor` — Interactive chat interface
+
+### Business Services
+- `EmailNotificationService.cs` — Email delivery and templates
+- `NotificationService.cs` — Notification orchestration
+- `PdfGenerationService.cs` — PDF receipt and invoice generation
+- `ImageService.cs` — Image processing and optimization
 
 ---
 
@@ -294,6 +348,10 @@ ItemShopHub.Blazor/              -> Blazor WASM client host
 | **Social Features** | Product wishlists, sharing, and social authentication |
 | **International Support** | Multi-currency, taxation, and localization |
 | **Performance Optimization** | Redis caching and CDN integration |
+| **Service Scheduling** | Calendar integration for service bookings |
+| **Live Chat Support** | Real-time customer support integration |
+| **Loyalty Programs** | Points and rewards system |
+| **Advanced Notifications** | SMS and push notification support |
 
 ---
 
@@ -317,12 +375,27 @@ ItemShopHub.Blazor/              -> Blazor WASM client host
 GET /api/products?$filter=contains(Name,'laptop')&$orderby=Price
 ```
 
+**Service Search**
+```http
+GET /api/services?$filter=contains(Name,'consulting')&$orderby=Price
+```
+
 **Add to Cart**
 ```http
 POST /api/cart/items
 {
   "productId": 123,
   "quantity": 2
+}
+```
+
+**Create Service Order**
+```http
+POST /api/serviceorders
+{
+  "serviceId": 456,
+  "scheduledDate": "2025-10-15",
+  "customerNotes": "Prefer morning appointment"
 }
 ```
 
@@ -341,6 +414,32 @@ POST /api/payments/process
 POST /api/chat/products
 {
   "question": "What laptops do you recommend for gaming under $1500?"
+}
+```
+
+**Manage Notifications**
+```http
+GET /api/notifications/user/{userId}
+POST /api/notifications/mark-read/{notificationId}
+```
+
+**Calculate Tax**
+```http
+POST /api/taxrates/calculate
+{
+  "amount": 100.00,
+  "state": "CA",
+  "zipCode": "90210"
+}
+```
+
+**Get Shipping Rates**
+```http
+POST /api/shippingrates/calculate
+{
+  "destinationZipCode": "90210",
+  "weight": 5.5,
+  "packageType": "Box"
 }
 ```
 
