@@ -1,0 +1,162 @@
+@page "/productchat"
+@inject AppService AppService
+@inject ISnackbar Snackbar
+@attribute [Authorize]
+
+<PageTitle>Product & Service Chat</PageTitle>
+
+<style>
+    .pulse-spin { animation: pulse 1s ease-in-out infinite; }
+    @@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+    .ask-enabled { filter: none; opacity: 1; transition: opacity .15s ease; }
+    .ask-disabled { opacity: .45; transition: opacity .15s ease; }
+    .chat-spinner { height:20px; width:20px; }
+</style>
+
+<MudStack Class="mt-4" Spacing="2">
+    <MudPaper Class="pa-4" Elevation="2">
+        <MudText Typo="Typo.h5">Product & Service Chat</MudText>
+        <MudText Typo="Typo.caption" Class="mb-2">Ask questions about our products and services. The assistant refuses anything else.</MudText>
+        <MudTextField @bind-Value="userQuestion"
+                      Label="Your question"
+                      Variant="Variant.Outlined"
+                      FullWidth="true"
+                      Lines="3"
+                      Immediate="true"
+                      @onkeydown="HandleKeyDown" />
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudButton Class="@(CanAsk ? "ask-enabled" : "ask-disabled")"
+                       Disabled="loading || !CanAsk"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="AskAsync"
+                       StartIcon="@Icons.Material.Filled.Send">
+                @(loading ? "Sending..." : "Ask")
+            </MudButton>
+            @if (loading)
+            {
+                <MudProgressCircular Indeterminate="true" Class="ml-2 pulse-spin chat-spinner" Color="Color.Primary" />
+            }
+        </MudStack>
+        <MudText Typo="Typo.caption" Class="mt-1">Press Enter to send (Shift+Enter for newline).</MudText>
+    </MudPaper>
+
+    @if (responses.Any())
+    {
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudExpansionPanels MultiExpansion="true">
+                @foreach (var r in responses)
+                {
+                    <MudExpansionPanel Text="@($"Q: {r.Question}")" Expanded="@r.Expanded" ExpandedChanged="@(v => r.Expanded = v)">
+                        <MudText Typo="Typo.body1">@((MarkupString)r.AnswerHtml)</MudText>
+                        @if (r.ProductSources.Any() || r.ServiceSources.Any() || r.OrderSources.Any() || r.ServiceOrderSources.Any())
+                        {
+                            <MudDivider Class="my-2" />
+                            @if (r.ProductSources.Any())
+                            {
+                                <MudText Typo="Typo.subtitle2">Product Sources:</MudText>
+                                <ul class="mud-typography-body2">
+                                    @foreach (var s in r.ProductSources)
+                                    {
+                                        <li>@s.Id - @s.Name (@(s.Price?.ToString("C") ?? "N/A"))</li>
+                                    }
+                                </ul>
+                            }
+                            @if (r.ServiceSources.Any())
+                            {
+                                <MudText Typo="Typo.subtitle2">Service Sources:</MudText>
+                                <ul class="mud-typography-body2">
+                                    @foreach (var s in r.ServiceSources)
+                                    {
+                                        <li>@s.Id - @s.Name (@(s.Price?.ToString("C") ?? "N/A")) - @s.Type</li>
+                                    }
+                                </ul>
+                            }
+                            @if (r.OrderSources.Any())
+                            {
+                                <MudText Typo="Typo.subtitle2">Order Sources:</MudText>
+                                <ul class="mud-typography-body2">
+                                    @foreach (var s in r.OrderSources)
+                                    {
+                                        <li>@s.Id - @s.Name (@(s.Price?.ToString("C") ?? "N/A")) - @s.Type</li>
+                                    }
+                                </ul>
+                            }
+                            @if (r.ServiceOrderSources.Any())
+                            {
+                                <MudText Typo="Typo.subtitle2">Service Order Sources:</MudText>
+                                <ul class="mud-typography-body2">
+                                    @foreach (var s in r.ServiceOrderSources)
+                                    {
+                                        <li>@s.Id - @s.Name (@(s.Price?.ToString("C") ?? "N/A")) - @s.Type</li>
+                                    }
+                                </ul>
+                            }
+                        }
+                    </MudExpansionPanel>
+                }
+            </MudExpansionPanels>
+        </MudPaper>
+    }
+</MudStack>
+
+@code {
+    private string? userQuestion;
+    private bool loading;
+    private List<ChatRecord> responses = new();
+    private bool CanAsk => !string.IsNullOrWhiteSpace(userQuestion);
+
+    private async Task AskAsync()
+    {
+        if (loading || !CanAsk) return;
+        var question = userQuestion!.Trim();
+        if (question.Length == 0) return;
+        loading = true;
+        StateHasChanged();
+        try
+        {
+            var (answer, productSources, serviceSources, orderSources, serviceOrderSources) = await AppService.AskProductChatAsync(question);
+            var safe = System.Net.WebUtility.HtmlEncode(answer).Replace("\n", "<br/>");
+            // collapse previous, expand new
+            foreach (var r in responses) r.Expanded = false;
+            responses.Insert(0, new ChatRecord
+            {
+                Question = question,
+                AnswerHtml = safe,
+                ProductSources = productSources.ToList(),
+                ServiceSources = serviceSources.ToList(),
+                OrderSources = orderSources.ToList(),
+                ServiceOrderSources = serviceOrderSources.ToList(),
+                Expanded = true
+            });
+            userQuestion = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await AskAsync();
+        }
+    }
+
+    private class ChatRecord
+    {
+        public string Question { get; set; } = string.Empty;
+        public string AnswerHtml { get; set; } = string.Empty;
+        public List<AppService.SourceItem> ProductSources { get; set; } = new();
+        public List<AppService.SourceItem> ServiceSources { get; set; } = new();
+        public List<AppService.SourceItem> OrderSources { get; set; } = new();
+        public List<AppService.SourceItem> ServiceOrderSources { get; set; } = new();
+        public bool Expanded { get; set; }
+    }
+}

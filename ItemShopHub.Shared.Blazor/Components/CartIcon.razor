@@ -1,0 +1,282 @@
+@using ItemShopHub.Shared.Models
+@using ItemShopHub.Shared.Blazor.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject CartService CartService
+@inject AppService AppService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@implements IDisposable
+
+<style>
+    .cart-badge-positioned .mud-badge-content {
+        position: absolute !important;
+        top: -8px !important;
+        right: -8px !important;
+        cursor: pointer !important;
+        z-index: 1000 !important;
+    }
+</style>
+
+@if (isAuthStateLoaded)
+{
+    <AuthorizeView>
+        <Authorized>
+            <MudTooltip Text="Shopping Cart">
+                @if (CartService.CartCount > 0)
+    {
+        <MudBadge Origin="Origin.CenterCenter" Content="@CartService.CartCount" Color="Color.Error" Overlap="true" 
+                  Class="cart-badge-positioned" @onclick="@(() => ToggleCartDrawer(true))" style="cursor: pointer;">
+            <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart" 
+                           Color="Color.Inherit" 
+                           OnClick="@(() => ToggleCartDrawer(true))"
+                           Size="Size.Medium" />
+        </MudBadge>
+    }
+    else
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart" 
+                       Color="Color.Inherit" 
+                       OnClick="@(() => ToggleCartDrawer(true))"
+                       Size="Size.Medium" />
+    }
+</MudTooltip>
+
+<MudDrawer @bind-Open="ShoppingCartDrawerOpen" Anchor="Anchor.Right" Variant="DrawerVariant.Temporary" Width="500px">
+    <div style="padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <MudText Typo="Typo.h6" Color="Color.Primary">Shopping Cart</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Inherit" OnClick="@(() => ToggleCartDrawer(false))" />
+        </div>
+        
+        @if (CartService.CartItems?.Any() == true)
+        {
+            <div style="max-height: calc(100vh - 300px); overflow-y: auto;">
+                @foreach (var item in CartService.CartItems)
+                {
+                    <MudCard style="margin-bottom: 8px;">
+                        <MudCardContent>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <MudText Typo="Typo.body1">@item.Name</MudText>
+                                    <MudText Typo="Typo.body2">@item.Description</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">$@item.Price?.ToString("F2")</MudText>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" OnClick="@(() => UpdateQuantity(item, -1))" />
+                                    <MudText>@item.Quantity</MudText>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="@(() => UpdateQuantity(item, 1))" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveItem(item))" />
+                                </div>
+                            </div>
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </div>
+            
+            <MudDivider style="margin: 16px 0;" />
+            
+            <div style="padding: 16px 0;">
+                <MudText Typo="Typo.h6" style="margin-bottom: 8px;">Order Summary</MudText>
+
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <MudText>Subtotal:</MudText>
+                    <MudText>$@subtotal.ToString("F2")</MudText>
+                </div>
+
+                @if (defaultShippingRate is not null)
+                {
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <MudText>@shippingLabel:</MudText>
+                        <MudText>$@shippingAmount.ToString("F2")</MudText>
+                    </div>
+                }
+
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <MudText>Tax (8.75%):</MudText>
+                    <MudText>$@tax.ToString("F2")</MudText>
+                </div>
+
+                <MudDivider style="margin: 12px 0;" />
+
+                <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                    <MudText Typo="Typo.h6">Total:</MudText>
+                    <MudText Typo="Typo.h6" Color="Color.Primary">$@total.ToString("F2")</MudText>
+                </div>
+                
+                <MudButton FullWidth="true" Variant="Variant.Filled" Color="Color.Primary" style="margin-bottom: 8px;" OnClick="@HandleCheckout" Disabled="@IsBusy">
+                    @if (IsBusy)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                        <span style="margin-left: 8px;">Preparing checkout...</span>
+                    }
+                    else
+                    {
+                        <span>Checkout</span>
+                    }
+                </MudButton>
+                <MudButton FullWidth="true" Variant="Variant.Outlined" OnClick="@(() => ToggleCartDrawer(false))">
+                    Continue Shopping
+                </MudButton>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Style="margin-top: 8px; display:block;">
+                    Need Purchase Order or Cash? Choose your payment method on the checkout page.
+                </MudText>
+            </div>
+        }
+        else
+        {
+            <div style="text-align: center; padding: 32px 0;">
+                <MudIcon Icon="@Icons.Material.Filled.ShoppingCartCheckout" Style="font-size: 64px; color: #666; margin-bottom: 16px;" />
+                <MudText Typo="Typo.h6" style="margin-bottom: 8px;">Your cart is empty</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" style="margin-bottom: 16px;">Add some products to get started!</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => ToggleCartDrawer(false))">
+                    Browse Products
+                </MudButton>
+            </div>
+        }
+    </div>
+</MudDrawer>
+        </Authorized>
+    </AuthorizeView>
+}
+
+@code {
+    private bool ShoppingCartDrawerOpen { get; set; } = false;
+    private bool IsBusy { get; set; } = false;
+
+    // Order calculations
+    private decimal subtotal => CartService.CartItems?.Sum(x => (x.Price ?? 0) * x.Quantity) ?? 0;
+    private ShippingRate? defaultShippingRate;
+    private decimal shippingAmount => defaultShippingRate?.Amount ?? 0m;
+    private string shippingLabel => defaultShippingRate?.Name ?? "Standard Shipping";
+    private decimal tax => Math.Round(subtotal * 0.0875m, 2);
+    private decimal total => subtotal + tax + shippingAmount;
+
+    private bool isAuthStateLoaded = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        CartService.CartChanged += OnCartChanged;
+        await CartService.InitializeAsync();
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        isAuthStateLoaded = true;
+        
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            try
+            {
+                defaultShippingRate = await AppService.GetDefaultShippingRateAsync();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load default shipping rate: {ex.Message}");
+                // Don't show error message - this is expected for unauthenticated users
+            }
+        }
+        else
+        {
+            StateHasChanged();
+        }
+    }
+
+    private void OnCartChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ToggleCartDrawer(bool open)
+    {
+        ShoppingCartDrawerOpen = open;
+        StateHasChanged();
+    }
+
+    private async Task RemoveItem(CartProduct item)
+    {
+        if (item.Id.HasValue)
+        {
+            await CartService.RemoveFromCartAsync(item.Id.Value);
+            Snackbar.Add($"{item.Name} removed from cart.", Severity.Normal);
+        }
+    }
+
+    private async Task UpdateQuantity(CartProduct item, int delta)
+    {
+        if (item.Id.HasValue)
+        {
+            await CartService.UpdateQuantityAsync(item.Id.Value, delta);
+        }
+    }
+
+    private async Task HandleCheckout()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (CartService.CartItems?.Any() != true)
+        {
+            Snackbar.Add("Cart is empty.", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            IsBusy = true;
+            await SyncCartWithServerAsync();
+            ToggleCartDrawer(false);
+            Navigation.NavigateTo("/checkout");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Checkout preparation failed: {ex}");
+            Snackbar.Add($"Error preparing checkout: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task SyncCartWithServerAsync()
+    {
+        try
+        {
+            await AppService.ClearCartAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unable to synchronize cart with server.", ex);
+        }
+
+        if (CartService.CartItems == null || CartService.CartItems.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var item in CartService.CartItems)
+        {
+            if (!item.Id.HasValue)
+            {
+                continue;
+            }
+
+            var quantity = Math.Max(1, item.Quantity);
+            try
+            {
+                await AppService.AddToCartAsync(item.Id.Value, quantity);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to add '{item.Name}' to server cart.", ex);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        CartService.CartChanged -= OnCartChanged;
+    }
+}

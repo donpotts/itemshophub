@@ -1,0 +1,673 @@
+@page "/product"
+@inject AppService AppService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject HttpClient HttpClient
+@inject IJSRuntime JSRuntime
+@inject IStorageService StorageService
+@attribute [Authorize]
+@using CsvHelper
+@using ItemShopHub.Shared.Models
+@using System.Globalization
+@using System.Text.Json
+@using System.Linq
+@using Microsoft.AspNetCore.Components.Forms
+
+<PageTitle>Products</PageTitle>
+
+<div class="mb-3">
+    <MudText Typo="Typo.h3">Products</MudText>
+</div>
+
+<MudStack AlignItems="AlignItems.End" Class="mb-3">
+    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+        <MudToggleIconButton ToggledChanged="OnToggleView" Toggled="_isCardView"
+                           Icon="@Icons.Material.Filled.ViewModule" 
+                           ToggledIcon="@Icons.Material.Filled.ViewList"
+                           Size="Size.Medium" />
+        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.AddCircleOutline" Color="Color.Primary" OnClick="@(e => OnAdd())">Add</MudButton>
+    </MudStack>
+</MudStack>
+
+@if (_isCardView)
+{
+    <!-- Card View -->
+    <MudStack Class="mb-3">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h6">Products</MudText>
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                <MudTextField T="string" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" ValueChanged="@(value => SearchChanged(value))"></MudTextField>
+                <MudButton Color="Color.Primary" OnClick="ExportAllToCSV">Export CSV</MudButton>
+                <MudFileUpload T="IBrowserFile" Accept=".csv" FilesChanged="ImportFromCSV" MaximumFileCount="1">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Upload">
+                            Import CSV
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
+                @if (_isImporting)
+                {
+                    <MudProgressCircular Color="Color.Secondary" Size="Size.Small" Indeterminate="true" />
+                }
+            </MudStack>
+        </MudStack>
+    </MudStack>
+    
+    @if (_cardData != null && _cardData.Items.Any())
+    {
+        <MudGrid>
+            @foreach (var product in _cardData.Items)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudCard Style="height: 400px; display: flex; flex-direction: column;">
+                        @if (!string.IsNullOrEmpty(product.ImageUrl))
+                        {
+                            <MudCardMedia Image="@GetImageUrl(product.ImageUrl)" Height="200" Style="object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <MudPaper Height="200" Style="display: flex; align-items: center; justify-content: center; background-color: var(--mud-palette-background-gray);">
+                                <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.Image" Size="Size.Large" Color="Color.Default" />
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">No Image</MudText>
+                                </MudStack>
+                            </MudPaper>
+                        }
+                        <MudCardContent Style="flex: 1; display: flex; flex-direction: column;">
+                            <MudText Typo="Typo.h6" Style="margin-bottom: 8px;">@product.GetDisplayName()</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Style="flex: 1; overflow: hidden; text-overflow: ellipsis;">@product.Description</MudText>
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Style="margin-top: 8px;">
+                                <MudText Typo="Typo.h6" Color="Color.Primary">$@product.Price?.ToString("N2")</MudText>
+                                @{
+                                    var reviews = product.ProductReview ?? new List<ProductReview>();
+                                    var avgRating = reviews.Any(r => r.Rating.HasValue) 
+                                        ? (decimal)reviews.Where(r => r.Rating.HasValue).Average(r => r.Rating!.Value)
+                                        : (decimal?)null;
+                                    var reviewCount = reviews.Count;
+                                }
+                                @if (avgRating.HasValue)
+                                {
+                                    <ProductRatingDisplay ProductId="@product.Id!.Value"
+                                                        AverageRating="@avgRating"
+                                                        TotalReviews="@reviewCount"
+                                                        Reviews="@reviews"
+                                                        ShowBreakdown="true"
+                                                        StarSize="Size.Small"
+                                                        RatingTypo="Typo.caption"
+                                                        CountTypo="Typo.caption" />
+                                }
+                            </MudStack>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" title="Edit" OnClick="@(e => OnEdit(product))" />
+                            <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="@Size.Small" title="Delete" OnClick="@(e => OnDelete(product))" />
+                            <MudSpacer />
+                            @if (product.InStock == true)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Text="In Stock" />
+                            }
+                            else
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Error" Text="Out of Stock" />
+                            }
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+        
+        <!-- Card View Pagination -->
+        <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
+            <MudPagination Count="@_totalPages" SelectedChanged="OnPageChanged" Selected="_currentPage" ShowFirstButton="true" ShowLastButton="true" />
+        </MudStack>
+    }
+    else
+    {
+        <MudText Typo="Typo.body1" Align="Align.Center" Class="mt-4">No products found</MudText>
+    }
+}
+else
+{
+    <!-- Grid View -->
+    <MudDataGrid T="Product" @ref="grid" ServerData="(new Func<GridState<Product>, Task<GridData<Product>>>(ServerReload))" Filterable="true">
+    <ToolBarContent>
+         <MudText Typo="Typo.h6">Products</MudText>
+         <MudSpacer />
+         <MudTextField T="string" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" ValueChanged="@(value => SearchChanged(value))"></MudTextField>
+         <MudButton Color="Color.Primary" OnClick="ExportAllToCSV">Export CSV</MudButton>
+         <MudFileUpload T="IBrowserFile" Accept=".csv" FilesChanged="ImportFromCSV" MaximumFileCount="1">
+             <ActivatorContent>
+                 <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Upload">
+                     Import CSV
+                 </MudButton>
+             </ActivatorContent>
+         </MudFileUpload>
+         @if (_isImporting)
+         {
+             <MudProgressCircular Color="Color.Secondary" Size="Size.Small" Indeterminate="true" />
+         }
+    </ToolBarContent>
+    <Columns>
+    <PropertyColumn Property="x => x!.Id" Title="Id" />
+    <PropertyColumn Property="x => x!.Model" Title="Model" />
+    <PropertyColumn Property="x => x!.Name" Title="Name" />
+        <PropertyColumn Property="x => x!.Description" Title="Description" />
+        <PropertyColumn Property="x => x!.DetailedSpecs" Title="DetailedSpecs" />
+        <PropertyColumn Property="x => x!.Price" Title="Price" />
+        <TemplateColumn Title="Image" Sortable="false">
+            <CellTemplate>
+                @if (!string.IsNullOrEmpty(context.Item?.ImageUrl))
+                {
+                    <MudButton Variant="Variant.Text" Style="padding: 0;" OnClick="@(() => ShowImageDialog(context.Item.ImageUrl))">
+                        <MudImage Src="@GetImageUrl(context.Item.ImageUrl)" 
+                                 Alt="Product Image" 
+                                 Width="80" 
+                                 Height="60" 
+                                 ObjectFit="ObjectFit.Cover" 
+                                 Style="border-radius: 4px;" />
+                    </MudButton>
+                }
+                else
+                {
+                    <MudPaper Width="80" Height="60" Style="display: flex; align-items: center; justify-content: center; background-color: var(--mud-palette-background-gray); border-radius: 4px;">
+                        <MudIcon Icon="@Icons.Material.Filled.Image" Size="Size.Small" Color="Color.Default" />
+                    </MudPaper>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="x => x!.InStock" Title="InStock" />
+        <PropertyColumn Property="x => x!.ReleaseDate" Title="ReleaseDate" />
+        <PropertyColumn Property="x => x!.CreatedDate" Title="CreatedDate" />
+        <PropertyColumn Property="x => x!.ModifiedDate" Title="ModifiedDate" />
+        <PropertyColumn Property="x => x!.Notes" Title="Notes" />
+        <PropertyColumn Property="x => x!.UserId" Title="UserId" />
+        <TemplateColumn Title="Category" Sortable="false" Filterable="false">
+            <CellTemplate>
+                @string.Join(", ", context.Item.Category?.Select(x => x.Name?.ToString() ?? string.Empty) ?? [])
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Title="Brand" Sortable="false" Filterable="false">
+            <CellTemplate>
+                @string.Join(", ", context.Item.Brand?.Select(x => x.Name?.ToString() ?? string.Empty) ?? [])
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Title="Feature" Sortable="false" Filterable="false">
+            <CellTemplate>
+                @string.Join(", ", context.Item.Feature?.Select(x => x.Name?.ToString() ?? string.Empty) ?? [])
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Title="Tag" Sortable="false" Filterable="false">
+            <CellTemplate>
+                @string.Join(", ", context.Item.Tag?.Select(x => x.Name?.ToString() ?? string.Empty) ?? [])
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Title="Rating" Sortable="false" Filterable="false">
+            <CellTemplate>
+                @{
+                    var reviews = context.Item.ProductReview ?? new List<ProductReview>();
+                    var avgRating = reviews.Any(r => r.Rating.HasValue) 
+                        ? (decimal)reviews.Where(r => r.Rating.HasValue).Average(r => r.Rating!.Value)
+                        : (decimal?)null;
+                    var reviewCount = reviews.Count;
+                }
+                
+                @if (avgRating.HasValue)
+                {
+                    <ProductRatingDisplay ProductId="@context.Item.Id!.Value"
+                                        AverageRating="@avgRating"
+                                        TotalReviews="@reviewCount"
+                                        Reviews="@reviews"
+                                        ShowBreakdown="true"
+                                        StarSize="Size.Small"
+                                        RatingTypo="Typo.caption"
+                                        CountTypo="Typo.caption" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Tertiary">No reviews</MudText>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Style="width: 50px;" StickyRight="true" Sortable="false" Filterable="false">
+            <CellTemplate>
+                <MudStack Row="true">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" title="Edit" OnClick="@(e => OnEdit(context.Item!))" />
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="@Size.Small" title="Delete" OnClick="@(e => OnDelete(context.Item!))" />
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="Product" />
+    </PagerContent>
+</MudDataGrid>
+}
+
+<script>
+    window.downloadFromBase64 = function (base64, filename) {
+        var a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        var byteCharacters = atob(base64);
+        var byteNumbers = new Array(byteCharacters.length);
+        for (var i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        var byteArray = new Uint8Array(byteNumbers);
+        var blob = new Blob([byteArray], { type: "application/octet-stream" });
+        var url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = filename;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+</script>
+
+@code {
+    private MudDataGrid<Product>? grid;
+    private string? _searchString;
+    private bool _isImporting = false;
+    private IBrowserFile? _csvFile;
+    private bool _isCardView = false;
+    private GridData<Product>? _cardData;
+    private int _currentPage = 1;
+    private int _pageSize = 12;
+    private int _totalPages = 1;
+    private string GetAbsoluteUri(string uri)
+    {
+        if (!uri.StartsWith("/"))
+        {
+            return uri;
+        }
+
+        var baseUri = HttpClient.BaseAddress;
+
+        if (baseUri == null)
+        {
+            throw new Exception("Unable to determine base address");
+        }
+
+        Uri absolute = new(baseUri, uri);
+
+        return absolute.ToString();
+    }
+
+    private string GetImageUrl(string? imageUrl)
+    {
+        if (string.IsNullOrEmpty(imageUrl))
+            return string.Empty;
+            
+        // If it's already a full URL, return as-is
+        if (imageUrl.StartsWith("http://") || imageUrl.StartsWith("https://"))
+            return imageUrl;
+            
+        // If it starts with /, make it relative to base URL
+        if (imageUrl.StartsWith("/"))
+            return GetAbsoluteUri(imageUrl);
+            
+        // Otherwise prepend /
+        return GetAbsoluteUri($"/{imageUrl}");
+    }
+
+    private async Task ShowImageDialog(string imageUrl)
+    {
+        var parameters = new DialogParameters
+        {
+            ["ImageUrl"] = GetImageUrl(imageUrl)
+        };
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            CloseButton = true,
+            BackdropClick = true
+        };
+        await (await DialogService.ShowAsync<ProductImageDialog>("Product Image", parameters, options)).Result;
+    }
+
+    private async Task<GridData<Product>> ServerReload(GridState<Product> state)
+    {
+        var top = state.PageSize;
+        var skip = state.Page * state.PageSize;
+        var orderby = ODataHelpers.GetOrderBy(state.SortDefinitions);
+        var filter = ODataHelpers.GetFilter(state.FilterDefinitions);
+
+        AppService.ODataResult<Product>? result = null;
+
+        try
+        {
+            if (_searchString?.Length > 0)
+            {
+               bool isNumeric = double.TryParse(_searchString, out _);
+               bool isDateTime = DateTime.TryParse(_searchString, out _);
+
+               if (isNumeric)
+               {
+                   filter = $"Id eq {_searchString} or Price eq {_searchString} or UserId eq {_searchString}";
+               }
+               else if (isDateTime)
+               {
+                   filter = $"ReleaseDate ge cast({_searchString},Edm.DateTimeOffset) or CreatedDate ge cast({_searchString},Edm.DateTimeOffset) or ModifiedDate ge cast({_searchString},Edm.DateTimeOffset)";
+               }
+               else
+               {
+                   filter = $"contains(tolower(Name), '{_searchString}') or contains(tolower(Description), '{_searchString}') or contains(tolower(DetailedSpecs), '{_searchString}') or contains(tolower(ImageUrl), '{_searchString}') or contains(tolower(Notes), '{_searchString}') ";
+               }
+            }
+            result = await AppService.ListProductODataAsync(top, skip, orderby, filter, true, "Category,Brand,Feature,Tag,ProductReview");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+        return new() { TotalItems = result?.Count ?? 0, Items = result?.Value ?? Enumerable.Empty<Product>() };
+    }
+
+    private async void OnAdd()
+    {
+        DialogOptions dialogOptions = new() { FullWidth = true, CloseOnEscapeKey = true };
+        var dialogRef = await DialogService.ShowAsync<AddProduct>("Add Product", dialogOptions);
+        var result = await dialogRef.Result;
+        if (result != null && !result.Canceled)
+            await (grid?.ReloadServerData() ?? Task.CompletedTask);
+    }
+
+    private async void OnEdit(Product record)
+    {
+        DialogParameters<UpdateProduct> dialogParams = new() { { x => x.Id, record.Id!.Value } };
+        DialogOptions dialogOptions = new() { FullWidth = true, CloseOnEscapeKey = true };
+        var dialogRef = await DialogService.ShowAsync<UpdateProduct>("Update Product", dialogParams, dialogOptions);
+        var result = await dialogRef.Result;
+        if (result != null && !result.Canceled)
+            await (grid?.ReloadServerData() ?? Task.CompletedTask);
+    }
+
+    private async void OnDelete(Product record)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Are you sure you want to delete this record?",
+            "Delete",
+            "Cancel");
+
+        if (result.GetValueOrDefault(false))
+        {
+            try
+            {
+                await AppService.DeleteProductAsync(record.Id!.Value);
+                await (grid?.ReloadServerData() ?? Task.CompletedTask);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+        }
+    }
+    
+    private void SearchChanged(string Value)
+    {
+        if (Value.EndsWith("."))
+        {
+            return;
+        }
+        _searchString = Value.ToString().ToLower();
+        try
+        {
+            if (_searchString.Length > 18)
+            {
+                DateTimeOffset dateTime = DateTime.Parse(_searchString);
+                _searchString = dateTime.ToString("yyyy-MM-ddTHH:mm:ssK");
+                //Console.WriteLine(_searchString);
+            }
+        }
+        catch
+        {
+            return;
+        }
+        
+        if (_isCardView)
+        {
+            _currentPage = 1;
+            _ = LoadCardData();
+        }
+        else
+        {
+            grid?.ReloadServerData();
+        }
+    }
+
+    private async Task ExportAllToCSV()
+    {
+        AppService.ODataResult<Product>? result = null;
+        try
+        {
+            result = await AppService.ListProductODataAsync(null, null, null, null, true, "Category,Brand,Feature,Tag,ProductReview");
+            if (result?.Value is { } products)
+            {
+                var records = products.Select(x => new
+                {
+                    x.Id,
+                    x.Model,
+                    x.Name,
+                    x.Description,
+                    x.DetailedSpecs,
+                    x.Price,
+                    x.ImageUrl,
+                    x.InStock,
+                    x.ReleaseDate,
+                    x.CreatedDate,
+                    x.ModifiedDate,
+                    x.Notes,
+                    x.UserId,
+                    Category = string.Join(", ", x.Category?.Select(c => c.Name ?? string.Empty) ?? Array.Empty<string>()),
+                    Brand = string.Join(", ", x.Brand?.Select(b => b.Name ?? string.Empty) ?? Array.Empty<string>()),
+                    Feature = string.Join(", ", x.Feature?.Select(f => f.Name ?? string.Empty) ?? Array.Empty<string>()),
+                    Tag = string.Join(", ", x.Tag?.Select(t => t.Name ?? string.Empty) ?? Array.Empty<string>()),
+                    ProductReview = string.Join(", ", x.ProductReview?.Select(r => r.Title ?? string.Empty) ?? Array.Empty<string>())
+                });
+                using var memoryStream = new MemoryStream();
+                using (var writer = new StreamWriter(memoryStream))
+                using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                {
+                    csv.WriteRecords(records);
+                }
+                var base64 = Convert.ToBase64String(memoryStream.ToArray());
+                await JSRuntime.InvokeVoidAsync("downloadFromBase64", base64, "Product_" + DateTime.Now.ToString("yyyyMMddHHmmss") + ".csv");
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task ImportFromCSV(IBrowserFile file)
+    {
+        if (file == null) return;
+
+        _csvFile = file;
+        _isImporting = true;
+        StateHasChanged();
+
+        try
+        {
+            var fileContent = new byte[_csvFile.Size];
+            using (var stream = _csvFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
+            {
+                await stream.ReadAsync(fileContent, 0, (int)_csvFile.Size);
+            }
+
+            using var memoryStream = new MemoryStream(fileContent);
+            using var reader = new StreamReader(memoryStream);
+            using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+            
+            csv.Context.Configuration.HeaderValidated = null;
+            csv.Context.Configuration.MissingFieldFound = null;
+
+            var products = new List<Product>();
+            await csv.ReadAsync();
+            csv.ReadHeader();
+            
+            while (await csv.ReadAsync())
+            {
+                var product = new Product();
+                
+                product.Model = GetFieldValue(csv, "model") ?? GetFieldValue(csv, "Model");
+                product.Name = GetFieldValue(csv, "name") ?? GetFieldValue(csv, "Name");
+                product.Description = GetFieldValue(csv, "description") ?? GetFieldValue(csv, "Description");
+                product.DetailedSpecs = GetFieldValue(csv, "detailedspecs") ?? GetFieldValue(csv, "DetailedSpecs");
+                product.ImageUrl = GetFieldValue(csv, "imageurl") ?? GetFieldValue(csv, "ImageUrl");
+                product.Notes = GetFieldValue(csv, "notes") ?? GetFieldValue(csv, "Notes");
+                
+                var priceStr = GetFieldValue(csv, "price") ?? GetFieldValue(csv, "Price");
+                if (!string.IsNullOrWhiteSpace(priceStr) && decimal.TryParse(priceStr, out var price))
+                {
+                    product.Price = price;
+                }
+                
+                var inStockStr = GetFieldValue(csv, "instock") ?? GetFieldValue(csv, "InStock");
+                if (!string.IsNullOrWhiteSpace(inStockStr) && bool.TryParse(inStockStr, out var inStock))
+                {
+                    product.InStock = inStock;
+                }
+                
+                var releaseDateStr = GetFieldValue(csv, "releasedate") ?? GetFieldValue(csv, "ReleaseDate");
+                if (!string.IsNullOrWhiteSpace(releaseDateStr) && DateTime.TryParse(releaseDateStr, out var releaseDate))
+                {
+                    product.ReleaseDate = releaseDate;
+                }
+                
+                var userIdStr = GetFieldValue(csv, "userid") ?? GetFieldValue(csv, "UserId");
+                if (!string.IsNullOrWhiteSpace(userIdStr) && long.TryParse(userIdStr, out var userId))
+                {
+                    product.UserId = userId;
+                }
+
+                products.Add(product);
+            }
+
+            if (products.Any())
+            {
+                var response = await AppService.BulkUpsertProductAsync(products);
+                if (response != null)
+                {
+                    var jsonElement = (JsonElement)response;
+                    var success = jsonElement.GetProperty("success").GetBoolean();
+                    var processedCount = jsonElement.GetProperty("processedCount").GetInt32();
+                    var addedCount = jsonElement.GetProperty("addedCount").GetInt32();
+                    var updatedCount = jsonElement.GetProperty("updatedCount").GetInt32();
+                    
+                    if (success)
+                    {
+                        Snackbar.Add($"Import successful: {processedCount} processed, {addedCount} added, {updatedCount} updated", Severity.Success);
+                        await (grid?.ReloadServerData() ?? Task.CompletedTask);
+                    }
+                    else
+                    {
+                        Snackbar.Add("Import failed", Severity.Error);
+                    }
+                }
+            }
+            else
+            {
+                Snackbar.Add("No valid products found in CSV", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error importing CSV: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isImporting = false;
+            StateHasChanged();
+        }
+    }
+
+    private string? GetFieldValue(CsvReader csv, string fieldName)
+    {
+        try
+        {
+            return csv.GetField(fieldName);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load view preference from localStorage
+        var savedViewPreference = await StorageService.GetAsync<bool?>("product-view-preference");
+        if (savedViewPreference.HasValue)
+        {
+            _isCardView = savedViewPreference.Value;
+        }
+        
+        if (_isCardView)
+        {
+            await LoadCardData();
+        }
+    }
+
+    private async Task LoadCardData()
+    {
+        var skip = (_currentPage - 1) * _pageSize;
+        var orderby = "CreatedDate desc";
+        var filter = "";
+
+        if (_searchString?.Length > 0)
+        {
+           bool isNumeric = double.TryParse(_searchString, out _);
+           bool isDateTime = DateTime.TryParse(_searchString, out _);
+
+           if (isNumeric)
+           {
+               filter = $"Id eq {_searchString} or Price eq {_searchString} or UserId eq {_searchString}";
+           }
+           else if (isDateTime)
+           {
+               filter = $"ReleaseDate ge cast({_searchString},Edm.DateTimeOffset) or CreatedDate ge cast({_searchString},Edm.DateTimeOffset) or ModifiedDate ge cast({_searchString},Edm.DateTimeOffset)";
+           }
+           else
+           {
+               filter = $"contains(tolower(Model), '{_searchString}') or contains(tolower(Name), '{_searchString}') or contains(tolower(Description), '{_searchString}') or contains(tolower(DetailedSpecs), '{_searchString}') or contains(tolower(ImageUrl), '{_searchString}') or contains(tolower(Notes), '{_searchString}') ";
+           }
+        }
+
+        try
+        {
+            var result = await AppService.ListProductODataAsync(_pageSize, skip, orderby, filter, true, "Category,Brand,Feature,Tag,ProductReview");
+            _cardData = new() { TotalItems = result?.Count ?? 0, Items = result?.Value ?? Enumerable.Empty<Product>() };
+            _totalPages = (int)Math.Ceiling((double)_cardData.TotalItems / _pageSize);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task OnPageChanged(int page)
+    {
+        _currentPage = page;
+        await LoadCardData();
+    }
+
+    private async Task OnToggleView(bool isCardView)
+    {
+        _isCardView = isCardView;
+        
+        // Save view preference to localStorage
+        await StorageService.SetAsync("product-view-preference", _isCardView);
+        
+        if (_isCardView)
+        {
+            _currentPage = 1;
+            await LoadCardData();
+        }
+        StateHasChanged();
+    }
+
+}

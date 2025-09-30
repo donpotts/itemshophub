@@ -1,0 +1,335 @@
+@page "/"
+<AuthorizeView>
+    <Authorized>
+        <div class="mb-3">
+            <MudText Typo="Typo.h3">Item Shop Hub Dashboard</MudText>
+        </div>
+        
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+            <MudPaper Class="pa-6 mud-elevation-2">
+                <MudGrid Spacing="4">
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.h5" GutterBottom>Welcome to Item Shop Hub</MudText>
+                        <MudText Typo="Typo.body1" Class="mb-4">
+                            Manage your product and service catalogs with comprehensive review analytics and AI-powered insights. 
+                            Track ratings, manage inventory, and engage with customer feedback all in one place.
+                        </MudText>
+                    </MudItem>
+                    
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.h6" Class="mb-4">Quick Actions</MudText>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudCard Class="mud-elevation-2 rounded-lg" Style="height: 100%;">
+                                    <MudCardContent Class="pa-4">
+                                        <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@Icons.Material.Filled.Inventory" Size="Size.Large" Color="Color.Primary" />
+                                            <MudText Typo="Typo.subtitle1" Align="Align.Center">Product and Service Catalogs</MudText>
+                                            <MudText Typo="Typo.body2" Align="Align.Center">Manage your products, services, brands, categories, and features</MudText>
+                                        </MudStack>
+                                    </MudCardContent>
+                                    <MudCardActions Class="justify-center">
+                                        <MudButton Href="/product" Color="Color.Primary" Variant="Variant.Filled">View Products</MudButton>
+                                    </MudCardActions>
+                                </MudCard>
+                            </MudItem>
+                            
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudCard Class="mud-elevation-2 rounded-lg" Style="height: 100%;">
+                                    <MudCardContent Class="pa-4">
+                                        <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@Icons.Material.Filled.Reviews" Size="Size.Large" Color="Color.Secondary" />
+                                            <MudText Typo="Typo.subtitle1" Align="Align.Center">Customer Reviews</MudText>
+                                            <MudText Typo="Typo.body2" Align="Align.Center">Monitor ratings, feedback, and review analytics</MudText>
+                                        </MudStack>
+                                    </MudCardContent>
+                                    <MudCardActions Class="justify-center">
+                                        <MudButton Href="/productreview" Color="Color.Secondary" Variant="Variant.Filled">View Reviews</MudButton>
+                                    </MudCardActions>
+                                </MudCard>
+                            </MudItem>
+                            
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudCard Class="mud-elevation-2 rounded-lg" Style="height: 100%;">
+                                    <MudCardContent Class="pa-4">
+                                        <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@Icons.Material.Filled.Storefront" Size="Size.Large" Color="Color.Tertiary" />
+                                            <MudText Typo="Typo.subtitle1" Align="Align.Center">Shopping Catalog</MudText>
+                                            <MudText Typo="Typo.body2" Align="Align.Center">Browse products and add them to your cart for purchase</MudText>
+                                        </MudStack>
+                                    </MudCardContent>
+                                    <MudCardActions Class="justify-center">
+                                        <MudButton Href="/catalog" Color="Color.Tertiary" Variant="Variant.Filled">Shop Products</MudButton>
+                                    </MudCardActions>
+                                </MudCard>
+                            </MudItem>
+                            
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudCard Class="mud-elevation-2 rounded-lg" Style="height: 100%;">
+                                    <MudCardContent Class="pa-4">
+                                        <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Large" Color="Color.Warning" />
+                                            <MudText Typo="Typo.subtitle1" Align="Align.Center">Shopping Cart</MudText>
+                                            <MudText Typo="Typo.body2" Align="Align.Center">Manage your shopping cart and checkout</MudText>
+                                        </MudStack>
+                                    </MudCardContent>
+                                    <MudCardActions Class="justify-center">
+                                        <MudButton Href="/cart" Color="Color.Warning" Variant="Variant.Filled">View Cart</MudButton>
+                                    </MudCardActions>
+                                </MudCard>
+                            </MudItem>
+                            
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudCard Class="mud-elevation-2 rounded-lg" Style="height: 100%;">
+                                    <MudCardContent Class="pa-4">
+                                        <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@Icons.Material.Filled.Build" Size="Size.Large" Color="Color.Success" />
+                                            <MudText Typo="Typo.subtitle1" Align="Align.Center">Service Catalog</MudText>
+                                            <MudText Typo="Typo.body2" Align="Align.Center">Browse and book professional services</MudText>
+                                        </MudStack>
+                                    </MudCardContent>
+                                    <MudCardActions Class="justify-center">
+                                        <MudButton Href="/services" Color="Color.Success" Variant="Variant.Filled">View Services</MudButton>
+                                    </MudCardActions>
+                                </MudCard>
+                            </MudItem>
+                            
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudCard Class="mud-elevation-2 rounded-lg" Style="height: 100%;">
+                                    <MudCardContent Class="pa-4">
+                                        <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@Icons.Material.Filled.Chat" Size="Size.Large" Color="Color.Info" />
+                                            <MudText Typo="Typo.subtitle1" Align="Align.Center">AI Product Chat</MudText>
+                                            <MudText Typo="Typo.body2" Align="Align.Center">Get intelligent insights about your products</MudText>
+                                        </MudStack>
+                                    </MudCardContent>
+                                    <MudCardActions Class="justify-center">
+                                        <MudButton Href="/productchat" Color="Color.Info" Variant="Variant.Filled">Start Chat</MudButton>
+                                    </MudCardActions>
+                                </MudCard>
+                            </MudItem>
+                        </MudGrid>
+                    </MudItem>
+                    
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.h6" Class="mb-4">Key Features</MudText>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12" md="6">
+                                <MudPaper Class="pa-4 mud-elevation-1">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                                        <MudIcon Icon="@Icons.Material.Filled.Star" Size="Size.Medium" Color="Color.Warning" />
+                                        <div>
+                                            <MudText Typo="Typo.subtitle1">Advanced Rating System</MudText>
+                                            <MudText Typo="Typo.body2">Comprehensive star ratings with breakdown analytics and verified purchase tracking</MudText>
+                                        </div>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                            
+                            <MudItem xs="12" md="6">
+                                <MudPaper Class="pa-4 mud-elevation-1">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                                        <MudIcon Icon="@Icons.Material.Filled.ImportExport" Size="Size.Medium" Color="Color.Info" />
+                                        <div>
+                                            <MudText Typo="Typo.subtitle1">CSV Import/Export</MudText>
+                                            <MudText Typo="Typo.body2">Bulk operations for products, brands, categories, and all other entities</MudText>
+                                        </div>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                            
+                            <MudItem xs="12" md="6">
+                                <MudPaper Class="pa-4 mud-elevation-1">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                                        <MudIcon Icon="@Icons.Material.Filled.ViewModule" Size="Size.Medium" Color="Color.Success" />
+                                        <div>
+                                            <MudText Typo="Typo.subtitle1">Flexible Views</MudText>
+                                            <MudText Typo="Typo.body2">Switch between card and grid views with persistent preferences</MudText>
+                                        </div>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                            
+                            <MudItem xs="12" md="6">
+                                <MudPaper Class="pa-4 mud-elevation-1">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                                        <MudIcon Icon="@Icons.Material.Filled.Security" Size="Size.Medium" Color="Color.Error" />
+                                        <div>
+                                            <MudText Typo="Typo.subtitle1">Secure Identity</MudText>
+                                            <MudText Typo="Typo.body2">ASP.NET Core Identity with role-based authorization and user management</MudText>
+                                        </div>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                            
+                            <MudItem xs="12" md="6">
+                                <MudPaper Class="pa-4 mud-elevation-1">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                                        <MudIcon Icon="@Icons.Material.Filled.Payment" Size="Size.Medium" Color="Color.Success" />
+                                        <div>
+                                            <MudText Typo="Typo.subtitle1">E-Commerce Ready</MudText>
+                                            <MudText Typo="Typo.body2">Complete shopping cart, checkout, and order management with Stripe integration</MudText>
+                                        </div>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                            
+                            <MudItem xs="12" md="6">
+                                <MudPaper Class="pa-4 mud-elevation-1">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                                        <MudIcon Icon="@Icons.Material.Filled.Calculate" Size="Size.Medium" Color="Color.Warning" />
+                                        <div>
+                                            <MudText Typo="Typo.subtitle1">Tax Calculation</MudText>
+                                            <MudText Typo="Typo.body2">Automatic tax calculation for all US states with accurate rate tables</MudText>
+                                        </div>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        </MudContainer>
+    </Authorized>
+    <NotAuthorized>
+    <div class="mb-3">
+        <MudText Typo="Typo.h3">Your Content Text Here</MudText>
+    </div>
+    <MudText>Welcome to your new content.</MudText>
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-16">
+        <MudPaper Class="pa-8 mud-elevation-4">
+            <MudGrid Spacing="4">
+                <MudItem xs="12">
+                    <MudPaper Class="pa-8 mud-elevation-2 rounded-lg" Style="background-color: var(--mud-palette-surface-lighten)">
+                        <MudGrid Spacing="4">
+                            <MudItem xs="12" md="4">
+                                <MudText Typo="Typo.h5" GutterBottom>Sample - Discover the future with AI</MudText>
+                                <MudText Typo="Typo.body1" Class="mb-4">Explore cutting-edge solutions powered by artificial intelligence. Learn how our innovative technologies are transforming industries and shaping tomorrow.</MudText>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large">get started</MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Large" Class="ml-4">learn more</MudButton>
+                            </MudItem>
+                            <MudItem xs="12" md="4" Class="text-center">
+                                <MudImage Src="images/ai_hero.png" Alt="AI Concept" Style="max-width: 100%; border-radius: 8px;" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6" Class="mb-4">Key Features</MudText>
+                    <MudGrid Spacing="4">
+                        <MudItem xs="12" md="4">
+                            <MudCard Class="mud-elevation-2 rounded-lg" Style="display: flex; flex-direction: column; height: 100%;">
+                                <MudCardContent Class="pa-6" Style="flex-grow: 1; display: flex; flex-direction: column; align-items: center;">
+                                    <MudImage Src="images/ai_feature_1.png" Alt="Feature 1" Style="max-width: 100%; height: auto; margin-bottom: 1rem;" />
+                                    <MudText Typo="Typo.subtitle1" Align="Align.Center" GutterBottom>Feature One</MudText>
+                                    <MudText Typo="Typo.body2" Align="Align.Center">This is a more detailed description of feature one. It highlights its key benefits and how it can help you achieve your goals.</MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudCard Class="mud-elevation-2 rounded-lg" Style="display: flex; flex-direction: column; height: 100%;">
+                                <MudCardContent Class="pa-6" Style="flex-grow: 1; display: flex; flex-direction: column; align-items: center;">
+                                    <MudImage Src="images/ai_feature_2.png" Alt="Feature 2" Style="max-width: 100%; height: auto; margin-bottom: 1rem;" />
+                                    <MudText Typo="Typo.subtitle1" Align="Align.Center" GutterBottom>Feature Two</MudText>
+                                    <MudText Typo="Typo.body2" Align="Align.Center">Learn about the second amazing feature. It offers unique capabilities and integrates seamlessly with our other solutions for enhanced performance.</MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudCard Class="mud-elevation-2 rounded-lg" Style="display: flex; flex-direction: column; height: 100%;">
+                                <MudCardContent Class="pa-6" Style="flex-grow: 1; display: flex; flex-direction: column; align-items: center;">
+                                    <MudImage Src="images/ai_feature_3.png" Alt="Feature 3" Style="max-width: 100%; height: auto; margin-bottom: 1rem;" />
+                                    <MudText Typo="Typo.subtitle1" Align="Align.Center" GutterBottom>Feature Three</MudText>
+                                    <MudText Typo="Typo.body2" Align="Align.Center">Discover the power of our third feature. It's designed to be intuitive and provides significant advantages in terms of efficiency and innovation.</MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    </MudGrid>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6" Class="mb-4">Our AI Solutions</MudText>
+                    <MudGrid Spacing="4">
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudCard Class="mud-elevation-2 rounded-lg" Style="display: flex; flex-direction: column; height: 100%;">
+                                <MudCardContent Class="pa-6" Style="flex-grow: 1; display: flex; flex-direction: column; align-items: center;">
+                                    <MudImage Src="images/ai_solution_1.png" Alt="Solution Alpha" Style="max-width: 100%; height: auto;" />
+                                    <MudText Typo="Typo.subtitle1" GutterBottom>Solution Alpha</MudText>
+                                    <MudText Typo="Typo.body2">This ai solution provides a comprehensive approach to problem-solving. It leverages advanced algorithms to deliver insightful results and streamline complex processes.</MudText>
+                                </MudCardContent>
+                                <MudCardActions>
+                                    <MudButton Size="Size.Small" Color="Color.Primary">explore</MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudCard Class="mud-elevation-2 rounded-lg" Style="display: flex; flex-direction: column; height: 100%;">
+                                <MudCardContent Class="pa-6" Style="flex-grow: 1; display: flex; flex-direction: column; align-items: center;">
+                                    <MudImage Src="images/ai_solution_2.png" Alt="Solution Beta" Style="max-width: 100%; height: auto;" />
+                                    <MudText Typo="Typo.subtitle1" GutterBottom>Solution Beta</MudText>
+                                    <MudText Typo="Typo.body2">Beta solution offers a specialized set of tools focused on enhancing user engagement. Its ai-driven recommendations and personalized experiences drive better outcomes.</MudText>
+                                </MudCardContent>
+                                <MudCardActions>
+                                    <MudButton Size="Size.Small" Color="Color.Primary">explore</MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudCard Class="mud-elevation-2 rounded-lg" Style="display: flex; flex-direction: column; height: 100%;">
+                                <MudCardContent Class="pa-6" Style="flex-grow: 1; display: flex; flex-direction: column; align-items: center;">
+                                    <MudImage Src="images/ai_solution_3.png" Alt="Solution Gamma" Style="max-width: 100%; height: auto;" />
+                                    <MudText Typo="Typo.subtitle1" GutterBottom>Solution Gamma</MudText>
+                                    <MudText Typo="Typo.body2">Gamma is engineered for scalability and efficiency. Our ai backbone ensures that this solution can adapt to growing demands while maintaining optimal performance and cost-effectiveness.</MudText>
+                                </MudCardContent>
+                                <MudCardActions>
+                                    <MudButton Size="Size.Small" Color="Color.Primary">explore</MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudCard Class="mud-elevation-2 rounded-lg" Style="display: flex; flex-direction: column; height: 100%;">
+                                <MudCardContent Class="pa-6" Style="flex-grow: 1; display: flex; flex-direction: column; align-items: center;">
+                                    <MudImage Src="images/ai_solution_4.png" Alt="Solution Delta" Style="max-width: 100%; height: auto;" />
+                                    <MudText Typo="Typo.subtitle1" GutterBottom>Solution Delta</MudText>
+                                    <MudText Typo="Typo.body2">Delta focuses on providing actionable insights through advanced data analysis. Its ai capabilities help you uncover hidden patterns and make data-driven decisions with confidence.</MudText>
+                                </MudCardContent>
+                                <MudCardActions>
+                                    <MudButton Size="Size.Small" Color="Color.Primary">explore</MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudCard Class="mud-elevation-2 rounded-lg" Style="display: flex; flex-direction: column; height: 100%;">
+                                <MudCardContent Class="pa-6" Style="flex-grow: 1; display: flex; flex-direction: column; align-items: center;">
+                                    <MudImage Src="images/ai_solution_5.png" Alt="Solution Epsilon" Style="max-width: 100%; height: auto;" />
+                                    <MudText Typo="Typo.subtitle1" GutterBottom>Solution Epsilon</MudText>
+                                    <MudText Typo="Typo.body2">Epsilon is built with a strong emphasis on security and privacy. Our ai models are designed to handle sensitive information responsibly, ensuring compliance and protecting your data.</MudText>
+                                </MudCardContent>
+                                <MudCardActions>
+                                    <MudButton Size="Size.Small" Color="Color.Primary">explore</MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudCard Class="mud-elevation-2 rounded-lg" Style="display: flex; flex-direction: column; height: 100%;">
+                                <MudCardContent Class="pa-6" Style="flex-grow: 1; display: flex; flex-direction: column; align-items: center;">
+                                    <MudImage Src="images/ai_solution_6.png" Alt="Solution Zeta" Style="max-width: 100%; height: auto;" />
+                                    <MudText Typo="Typo.subtitle1" GutterBottom>Solution Zeta</MudText>
+                                    <MudText Typo="Typo.body2">Zeta offers a highly customizable and adaptable ai framework. Tailor it to your specific needs and integrate it seamlessly into your existing infrastructure for maximum impact.</MudText>
+                                </MudCardContent>
+                                <MudCardActions>
+                                    <MudButton Size="Size.Small" Color="Color.Primary">explore</MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                    </MudGrid>
+                </MudItem>
+                <MudItem xs="12" Class="text-center mt-8">
+                    <MudText Typo="Typo.h6" Color="Color.Dark">Ready to innovate with AI?</MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Large" Class="mt-4">Contact Us</MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+        <MudText Align="Align.Center" Class="mt-8">© 2025 Your Name</MudText>
+    </MudContainer>
+</NotAuthorized>
+</AuthorizeView>

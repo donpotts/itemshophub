@@ -1,0 +1,235 @@
+@using System.Security.Claims
+@inject AppService AppService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<style>
+    /* Horizontal scroll container for cramped mobile widths */
+    .appbar-scroll { display:flex; align-items:center; overflow-x:auto; -webkit-overflow-scrolling:touch; gap:.25rem; }
+    .appbar-scroll::-webkit-scrollbar { display:none; }
+    .shrink-link { padding-left:.5rem !important; padding-right:.5rem !important; white-space:nowrap; }
+    .appbar-title { white-space:nowrap; }
+</style>
+
+<MudThemeProvider @ref="@mudThemeProvider" @bind-IsDarkMode="@_dark" />
+<MudAppBar Dense="true">
+    <AuthorizeView>
+        @if (!CheckedVariable)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        }
+    </AuthorizeView>
+    <MudText Class="d-flex mr-4 appbar-title">Item Shop Hub</MudText>
+
+    <!-- Toggle switch always visible -->
+    <MudTooltip Text="@tooltipText">
+        <MudSwitch T="bool"
+                   Class="d-flex justify-content-start mx-2"
+                   Value="CheckedVariable"
+                   ValueChanged="@(e => OnSwitchValueChanged((bool)e))"
+                   Color="Color.Success"
+                   UncheckedColor="Color.Secondary" />
+    </MudTooltip>
+
+    <MudSpacer />
+    
+    <AuthorizeView>
+        <CartIcon />
+    </AuthorizeView>
+
+    @if (CheckedVariable)
+    {
+        <div class="appbar-scroll">
+            <MudLink Href="/" Class="d-flex shrink-link" Color="Color.Inherit">
+                <MudIcon Icon="@Icons.Material.Filled.Home" Class="mr-1" /> Home
+            </MudLink>
+            <AuthorizeView>
+                <!-- Products Dropdown -->
+                <MudMenu Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Inherit" 
+                         AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft"
+                         Class="d-flex shrink-link">
+                    <ActivatorContent>
+                        <MudButton StartIcon="@Icons.Material.Filled.ShoppingCart" 
+                                   Color="Color.Inherit" 
+                                   EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                                   Class="d-flex shrink-link">
+                            Products
+                        </MudButton>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <MudMenuItem Href="/catalog" Icon="@Icons.Material.Filled.Storefront">Product Catalog</MudMenuItem>
+                        <MudMenuItem Href="/product" Icon="@Icons.Material.Filled.Inventory">Manage Products</MudMenuItem>
+                        <MudDivider />
+                        <MudMenuItem Href="/brand" Icon="@Icons.Material.Filled.Business">Brands</MudMenuItem>
+                        <MudMenuItem Href="/category" Icon="@Icons.Material.Filled.Category">Categories</MudMenuItem>
+                        <MudMenuItem Href="/feature" Icon="@Icons.Material.Filled.Extension">Features</MudMenuItem>
+                        <MudMenuItem Href="/tag" Icon="@Icons.Material.Filled.Label">Tags</MudMenuItem>
+                        <MudDivider />
+                        <MudMenuItem Href="/productreview" Icon="@Icons.Material.Filled.RateReview">Product Reviews</MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
+                
+                <!-- Services Dropdown -->
+                <MudMenu Icon="@Icons.Material.Filled.Build" Color="Color.Inherit" 
+                         AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft"
+                         Class="d-flex shrink-link">
+                    <ActivatorContent>
+                        <MudButton StartIcon="@Icons.Material.Filled.Build" 
+                                   Color="Color.Inherit" 
+                                   EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                                   Class="d-flex shrink-link">
+                            Services
+                        </MudButton>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <MudMenuItem Href="/services" Icon="@Icons.Material.Filled.Build">Service Catalog</MudMenuItem>
+                        <MudMenuItem Href="/services/list" Icon="@Icons.Material.Filled.Engineering">Manage Services</MudMenuItem>
+                        <MudDivider />
+                        <MudMenuItem Href="/service-companies" Icon="@Icons.Material.Filled.BusinessCenter">Service Companies</MudMenuItem>
+                        <MudMenuItem Href="/service-categories" Icon="@Icons.Material.Filled.ViewList">Service Categories</MudMenuItem>
+                        <MudMenuItem Href="/service-reviews" Icon="@Icons.Material.Filled.Star">Service Reviews</MudMenuItem>
+                        <MudDivider />
+                        <MudMenuItem Href="/service-expenses" Icon="@Icons.Material.Filled.Receipt">Service Expense Tracking</MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
+                
+                <!-- General Features -->
+                <MudLink Href="/productchat" Class="d-flex shrink-link" Color="Color.Inherit">
+                    <MudIcon Icon="@Icons.Material.Filled.SmartToy" Class="mr-1" /> AI Chat
+                </MudLink>
+                <MudLink Href="/my-orders" Class="d-flex shrink-link" Color="Color.Inherit">
+                    <MudIcon Icon="@Icons.Material.Filled.ListAlt" Class="mr-1" /> My Orders
+                </MudLink>
+            </AuthorizeView>
+            <AuthorizeView Roles="Administrator">
+                <MudLink Href="/user" Class="d-flex shrink-link" Color="Color.Inherit">
+                    <MudIcon Icon="@Icons.Material.Filled.People" Class="mr-1" /> Users
+                </MudLink>
+            </AuthorizeView>
+            <AuthorizeView>
+                <Authorized>
+                    <MudLink Href="/notification" Class="d-flex shrink-link" Color="Color.Inherit">
+                        <MudIcon Icon="@Icons.Material.Filled.Notifications" Class="mr-1" /> Notifications
+                    </MudLink>
+                    <MudLink Href="/account/changePassword" Class="d-flex shrink-link" Color="Color.Inherit">
+                        <MudIcon Icon="@Icons.Material.Filled.Password" Class="mr-1" /> Change PW
+                    </MudLink>
+                    <MudLink Href="/logout" Class="d-flex shrink-link" Color="Color.Inherit">
+                        <MudIcon Icon="@Icons.Material.Filled.Logout" Class="mr-1" /> Logout (@context.User.Identity!.Name)
+                    </MudLink>
+                </Authorized>
+                <NotAuthorized>
+                    <MudLink Href="/register" Class="d-flex shrink-link" Color="Color.Inherit">
+                        <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="mr-1" /> Register
+                    </MudLink>
+                    <MudLink Href="/login" Class="d-flex shrink-link" Color="Color.Inherit">
+                        <MudIcon Icon="@Icons.Material.Filled.Login" Class="mr-1" /> Login
+                    </MudLink>
+                </NotAuthorized>
+            </AuthorizeView>
+            <MudIconButton Icon="@(_dark ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.WbSunny)"
+                           Color="@(_dark ? Color.Warning : Color.Inherit)"
+                           Size="Size.Small"
+                           Class="ml-1" OnClick="@(() => _dark = !_dark)" />
+            <MudLink Href="https://www.radendpoint.com/" Class="d-flex shrink-link" Color="Color.Inherit">About</MudLink>
+        </div>
+    }
+    else
+    {
+        <MudIconButton Icon="@(_dark ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.WbSunny)"
+                       Color="@(_dark ? Color.Warning : Color.Inherit)"
+                       Size="Size.Small"
+                       Class="ml-1" OnClick="@(() => _dark = !_dark)" />
+        <MudLink Href="https://www.radendpoint.com/" Class="d-flex shrink-link" Color="Color.Inherit">About</MudLink>
+    }
+</MudAppBar>
+
+@if (!CheckedVariable)
+{
+    <AuthorizeView Context="authContext">
+        <Authorized>
+            <MudDrawer @bind-Open="drawerOpen" ClipMode="DrawerClipMode.Docked">
+                <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+                <AuthorizeView>
+                    <!-- Products Group -->
+                    <MudNavGroup Title="Products" Icon="@Icons.Material.Filled.ShoppingCart" Expanded="false">
+                        <MudNavLink Href="/catalog" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Storefront">Product Catalog</MudNavLink>
+                        <MudNavLink Href="/product" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Inventory">Manage Products</MudNavLink>
+                        <MudNavLink Href="/brand" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Business">Brands</MudNavLink>
+                        <MudNavLink Href="/category" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Category">Categories</MudNavLink>
+                        <MudNavLink Href="/feature" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Extension">Features</MudNavLink>
+                        <MudNavLink Href="/tag" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Label">Tags</MudNavLink>
+                        <MudNavLink Href="/productreview" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.RateReview">Product Reviews</MudNavLink>
+                    </MudNavGroup>
+
+                    <!-- Services Group -->
+                    <MudNavGroup Title="Services" Icon="@Icons.Material.Filled.Build" Expanded="false">
+                        <MudNavLink Href="/services" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Build">Service Catalog</MudNavLink>
+                        <MudNavLink Href="/services/list" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Engineering">Manage Services</MudNavLink>
+                        <MudNavLink Href="/service-companies" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.BusinessCenter">Service Companies</MudNavLink>
+                        <MudNavLink Href="/service-categories" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ViewList">Service Categories</MudNavLink>
+                        <MudNavLink Href="/service-reviews" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Star">Service Reviews</MudNavLink>
+                        <MudNavLink Href="/service-expenses" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Receipt">Service Expense Tracking</MudNavLink>
+                    </MudNavGroup>
+
+                    <!-- General Features -->
+                    <MudNavLink Href="/productchat" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SmartToy">AI Chat</MudNavLink>
+                    <MudNavLink Href="/my-orders" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ListAlt">My Orders</MudNavLink>
+                    <MudNavLink Href="/notification" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Notifications">Notifications</MudNavLink>
+                </AuthorizeView>
+                <AuthorizeView Roles="Administrator">
+                    <MudNavLink Href="/user" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.People">Users</MudNavLink>
+                </AuthorizeView>
+                <AuthorizeView>
+                    <Authorized>
+                        <MudNavLink Href="/account/changePassword" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Password">Change Password</MudNavLink>
+                        <MudNavLink Href="/logout" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Logout">Logout (@authContext.User.Identity!.Name)</MudNavLink>
+                    </Authorized>
+                    <NotAuthorized>
+                        <MudNavLink Href="/register" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.PersonAdd">Register</MudNavLink>
+                        <MudNavLink Href="/login" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </MudDrawer>
+        </Authorized>
+    </AuthorizeView>
+}
+
+@code {
+    private bool drawerOpen = true;
+    bool _dark = true;
+    private bool isDarkMode;
+    private MudThemeProvider? mudThemeProvider;
+    private bool isSwitchChecked = true;
+    private bool CheckedVariable;
+    private string tooltipText => isSwitchChecked ? "Top Menu ON" : "Top Menu is OFF";
+
+    private void DrawerToggle() => drawerOpen = !drawerOpen;
+
+    public void ScreenSizeChanged(bool hidden)
+    {
+        CheckedVariable = hidden ? false : isSwitchChecked;
+    }
+
+    public void OnSwitchValueChanged(bool checkedValue)
+    {
+        CheckedVariable = checkedValue;
+        isSwitchChecked = checkedValue;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && mudThemeProvider != null)
+        {
+            isDarkMode = await mudThemeProvider.GetSystemDarkModeAsync();
+            StateHasChanged();
+            await mudThemeProvider.WatchSystemDarkModeAsync(OnSystemPreferenceChanged);
+        }
+    }
+
+    protected Task OnSystemPreferenceChanged(bool isDarkMode)
+    {
+        this.isDarkMode = isDarkMode;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}
